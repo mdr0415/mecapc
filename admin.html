@@ -13,6 +13,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;900&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #020617; color: #f8fafc; }
         .admin-card { background: #0f172a; border: 1px solid #1e293b; }
+        .bukdae1-compact > span:first-child { font-size: 1.4rem; line-height: 1.05; }
+        .bukdae1-compact > span:last-child  { font-size: 1.3rem; line-height: 1.05; }
     </style>
 </head>
 <body>
@@ -21,12 +23,15 @@
         const { useState, useEffect } = React;
         const SUPABASE_URL = 'https://sslxmhgpygsjisuxqmjb.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_fb7TduQr58DH6C1n7WNlIw_OrH-sbZV';
+        const params = new URLSearchParams(window.location.search);
+        const CURRENT_STORE_ID = params.get('store') || 'bukdae1';
 
         const App = () => {
             const [supabase, setSupabase] = useState(null);
             const [rooms, setRooms] = useState([]);
             const [waitingList, setWaitingList] = useState([]);
             const [loading, setLoading] = useState(true);
+            const isBukdae1 = CURRENT_STORE_ID === 'bukdae1';
 
             useEffect(() => {
                 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -36,8 +41,8 @@
             useEffect(() => {
                 if (!supabase) return;
                 const fetchData = async () => {
-                    const { data: r } = await supabase.from('rooms').select('*').order('room_no', { ascending: true });
-                    const { data: w } = await supabase.from('waiting').select('*').eq('status', 'WAITING').order('created_at', { ascending: true });
+                    const { data: r } = await supabase.from('rooms').select('*').eq('store_id', CURRENT_STORE_ID).order('room_no', { ascending: true });
+                    const { data: w } = await supabase.from('waiting').select('*').eq('store_id', CURRENT_STORE_ID).eq('status', 'WAITING').order('created_at', { ascending: true });
                     setRooms(r || []);
                     setWaitingList(w || []);
                     setLoading(false);
@@ -68,7 +73,7 @@
                     <header className="flex-none flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-slate-800 shadow-xl">
                         <div>
                             <h1 className="text-3xl font-black text-blue-500 tracking-tighter italic">Meca PC 카운터 대시보드</h1>
-                            <p className="text-slate-500 text-xs font-bold tracking-widest mt-1">실시간 매장 관리</p>
+                            <p className="text-slate-500 text-xs font-bold tracking-widest mt-1">실시간 룸 관리</p>
                         </div>
                         <div className="bg-blue-600 px-8 py-3 flex items-center gap-6 rounded-2xl shadow-lg shadow-blue-600/20 text-center">
                             <span className="block text-sm text-blue-200 font-black tracking-widest">현재 전체 대기</span>
@@ -76,16 +81,24 @@
                         </div>
                     </header>
 
-                    <div className="flex-1 grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-                        {[3, 4, 5].map(capacity => {
-                            const capacityRooms = rooms.filter(r => r.capacity === capacity);
-                            const capacityWaiting = waitingList.filter(w => w.party_size === capacity);
-                            const emptyCount = capacityRooms.filter(r => r.status === 'EMPTY').length;
+                    {(() => {
+                        const capacities = [...new Set(rooms.map(r => r.capacity))].sort((a, b) => a - b);
+                        const getRoomName = (c) => c === 2 ? '커플룸' : `${c}인실`;
+                        
+                        return (
+                            <div className={`flex-1 grid grid-cols-1 ${capacities.length >= 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'} gap-6 items-start`}>
+                                {capacities.map(capacity => {
+                                    const capacityRooms = rooms.filter(r => r.capacity === capacity);
+                                    const capacityWaiting = waitingList.filter(w => w.party_size === capacity);
+                                    const emptyCount = capacityRooms.filter(r => r.status === 'EMPTY').length;
 
-                            return (
-                                <section key={capacity} className="flex flex-col bg-slate-900/40 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl h-fit">
-                                    <div className="bg-slate-800/80 p-6 flex justify-between items-center flex-none">
-                                        <h2 className="text-2xl font-black text-white tracking-widest italic">{capacity}인실</h2>
+                                    return (
+                                        <section key={capacity} className="flex flex-col bg-slate-900/40 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl h-fit">
+                                            <div className="bg-slate-800/80 p-6 flex justify-between items-center flex-none">
+                                                <h2 className="text-2xl font-black text-white tracking-widest italic flex items-baseline gap-1">
+                                                    {getRoomName(capacity)}
+                                                    {capacity === 2 && <span className="text-xs font-bold text-slate-400 not-italic">(2인)</span>}
+                                                </h2>
                                         <div className="flex gap-2">
                                             <span className="px-5 py-2 bg-green-500/10 text-green-400 rounded-full text-sm font-black tracking-widest">빈방 {emptyCount}개</span>
                                             <span className="px-5 py-2 bg-blue-500/10 text-blue-400 rounded-full text-sm font-black tracking-widest">대기 {capacityWaiting.length}팀</span>
@@ -116,12 +129,14 @@
                                                         <div className="flex justify-between items-start">
                                                             <div className="flex gap-4 items-center">
                                                                 <span className="text-4xl text-blue-500 font-black italic">#{index + 1}</span>
-                                                                <div className="flex items-baseline gap-4 ml-1">
+                                                                <div className={`flex items-baseline gap-4 ml-1 ${isBukdae1 ? 'bukdae1-compact' : ''}`}>
                                                                     <span className="text-2xl font-black text-white">{w.name}</span>
                                                                     <span className="text-xl text-blue-300 font-mono font-black tracking-widest">{w.phone.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, '$1-$2-$3')}</span>
                                                                 </div>
                                                             </div>
-                                                            <span className="text-[10px] text-slate-500 font-bold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg tracking-widest">전체 {globalIndex + 1}번</span>
+                                                            {!isBukdae1 && (
+                                                                <span className="text-[10px] text-slate-500 font-bold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg tracking-widest">전체 {globalIndex + 1}번</span>
+                                                            )}
                                                         </div>
                                                         <div className="flex gap-2">
                                                             <button onClick={() => cancel(w.id)} className="flex-1 py-4 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-2xl font-black text-sm active:scale-95 transition-all">예약취소</button>
@@ -132,10 +147,12 @@
                                             })
                                         )}
                                     </div>
-                                </section>
-                            );
-                        })}
-                    </div>
+                                        </section>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()}
                 </main>
             );
         };
