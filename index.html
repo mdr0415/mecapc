@@ -171,7 +171,7 @@
             padding: 2rem;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-around; /* 정중앙 모임 대신 균등 배분 */
             overflow-y: auto;
             -ms-overflow-style: none;
             scrollbar-width: none;
@@ -338,7 +338,7 @@
                                         </header>
 
                                         <div className="kiosk-content">
-                                            <div className="space-y-4">
+                                            <div className="space-y-6"> {/* 간격을 대폭 확장 */}
                                                 {(() => {
                                                     const getRoomName = (c) => c === 2 ? '커플룸' : `${c}인실`;
                                                     const getIcon = (c) => {
@@ -382,7 +382,7 @@
                                                         const isCompact = capacities.length >= 4;
                                                         const borderColorClass = cap === 2 ? 'border-l-pink-500' : cap === 3 ? 'border-l-sky-400' : cap === 4 ? 'border-l-teal-400' : 'border-l-indigo-400';
                                                         return (
-                                                            <div key={cap} className={`glass-card ${isCompact ? 'py-6' : 'py-8'} px-10 rounded-[3rem] flex justify-between items-center transition-all active:scale-[0.98] border-l-8 ${borderColorClass}`}>
+                                                            <div key={cap} className={`glass-card ${isCompact ? 'py-8' : 'py-12'} px-10 rounded-[3rem] flex justify-between items-center transition-all active:scale-[0.98] border-l-8 ${borderColorClass}`}>
                                                                 <div className="flex items-center gap-5">
                                                                     <div className="bg-white/5 w-20 h-20 flex items-center justify-center rounded-2xl flex-shrink-0">
                                                                         {getIcon(cap)}
