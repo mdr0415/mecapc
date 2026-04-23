@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Meca PC - Waiting System</title>
+    <!-- PWA settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // 필요한 커스텀 컬러가 있다면 여기에 추가
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;900&display=swap');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* 태블릿 스크롤 방지 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-top-color: rgba(0, 0, 0, 0.05);
+            border-right-color: rgba(0, 0, 0, 0.05);
+            border-bottom-color: rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-field {
+            background-color: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dark .input-field {
+            background-color: #0f172a;
+            border: 1.5px solid #1e293b;
+            color: white;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            background-color: #ffffff;
+        }
+
+        .dark .input-field:focus {
+            background-color: #020617;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        .mode-switcher {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        /* 주의문구 스타일 - 텍스트 크기 한 단계 축소 적용 */
+        .notice-container {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-left: 6px solid #ef4444;
+            padding: 1.25rem;
+            border-radius: 1.25rem;
+        }
+
+        .dark .notice-container {
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .notice-text {
+            font-size: 0.95rem;
+            /* 1.05rem에서 한 단계 축소 */
+            line-height: 1.6;
+            font-weight: 600;
+            word-break: keep-all;
+        }
+
+        * {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+            transition-duration: 300ms;
+        }
+
+        /* 키오스크 레이아웃 최적화 */
+        .tablet-screen {
+            height: 100vh;
+            height: 100svh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            /* 패딩 제거하고 자식 요소에서 관리 */
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.3) 0%, rgba(2, 6, 23, 0) 70%);
+        }
+
+        .dark .tablet-screen {
+            background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.3) 0%, rgba(2, 6, 23, 0) 70%), #020617;
+        }
+
+        .light .tablet-screen {
+            background: #f8fafc;
+        }
+
+        .kiosk-header {
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .dark .kiosk-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .kiosk-content {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .kiosk-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .kiosk-footer {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .dark .kiosk-footer {
+            background: rgba(15, 23, 42, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+
+        .dark .step-dot {
+            background: #1e293b;
+        }
+
+        .step-dot.active {
+            width: 24px;
+            background: #3b82f6;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const SUPABASE_URL = 'https://sslxmhgpygsjisuxqmjb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_fb7TduQr58DH6C1n7WNlIw_OrH-sbZV';
+        const params = new URLSearchParams(window.location.search);
+        const CURRENT_STORE_ID = params.get('store') || 'mohyeon1';
+
+        const App = () => {
+            const [view, setView] = useState('USER');
+            const [supabase, setSupabase] = useState(null);
+            const [rooms, setRooms] = useState([]);
+            const [waitingList, setWaitingList] = useState([]);
+            const [step, setStep] = useState('STATUS');
+            const [formData, setFormData] = useState({ name: '', phone: '', size: '4' });
+            const [myTicket, setMyTicket] = useState(null);
+            const [isDarkMode, setIsDarkMode] = useState(() => {
+                const saved = localStorage.getItem('mecapc_theme');
+                return saved !== null ? JSON.parse(saved) : true;
+            });
+
+            useEffect(() => {
+                localStorage.setItem('mecapc_theme', JSON.stringify(isDarkMode));
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+
+            useEffect(() => {
+                const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                setSupabase(client);
+            }, []);
+
+            useEffect(() => {
+                let timer;
+                if (step === 'COMPLETE') {
+                    timer = setTimeout(() => {
+                        setStep('STATUS');
+                        setMyTicket(null);
+                        setFormData({ name: '', phone: '', size: '4' });
+                    }, 15000);
+                }
+                return () => clearTimeout(timer);
+            }, [step]);
+
+            useEffect(() => {
+                if (!supabase) return;
+                const fetchData = async () => {
+                    const { data: r } = await supabase.from('rooms').select('*').eq('store_id', CURRENT_STORE_ID).order('room_no', { ascending: true });
+                    const { data: w } = await supabase.from('waiting').select('*').eq('store_id', CURRENT_STORE_ID).eq('status', 'WAITING').order('created_at', { ascending: true });
+                    setRooms(r || []);
+                    setWaitingList(w || []);
+                };
+                fetchData();
+                const channel = supabase.channel('realtime-sync').on('postgres_changes', { event: '*', schema: 'public', table: '*' }, fetchData).subscribe();
+                return () => supabase.removeChannel(channel);
+            }, [supabase]);
+
+            const handleRegister = async () => {
+                if (!formData.name || !formData.phone) {
+                    alert('성함과 연락처를 모두 입력해 주세요.');
+                    return;
+                }
+                const phoneNumbersOnly = formData.phone.replace(/[^0-9]/g, '');
+                if (phoneNumbersOnly.length !== 11) {
+                    alert('연락처는 11자리 숫자로 정확히 입력해 주세요.');
+                    return;
+                }
+                const { data, error } = await supabase.from('waiting').insert([{
+                    name: formData.name, phone: formData.phone, party_size: parseInt(formData.size), store_id: CURRENT_STORE_ID
+                }]).select();
+                if (!error && data) {
+                    setMyTicket(data[0]);
+                    setStep('COMPLETE');
+                }
+            };
+
+            const resetToStatus = () => {
+                setStep('STATUS');
+                setMyTicket(null);
+                setFormData({ name: '', phone: '', size: '4' });
+            };
+
+            return (
+                <div className={isDarkMode ? 'dark' : 'light'}>
+                    <div className="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
+                        <div onClick={() => setView(view === 'USER' ? 'ADMIN' : 'USER')} className="mode-switcher"></div>
+
+                        {view === 'USER' ? (
+                            <div className="mx-auto relative border-x-4 border-dashed border-yellow-500/10 dark:border-yellow-500/30 bg-white/5 dark:bg-slate-900/20 shadow-2xl" style={{ width: '100%', maxWidth: 'calc(100svh * (1600 / 2560))', height: '100svh' }}>
+                            {step === 'STATUS' && (() => {
+                                const capacities = [...new Set(rooms.map(r => r.capacity))].sort((a, b) => a - b);
+                                return (
+                                    <div className="tablet-screen fade-in">
+                                        <header className="kiosk-header relative">
+                                            <button 
+                                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                                className="absolute right-8 top-10 w-14 h-14 rounded-2xl bg-white/5 border border-white/10 dark:bg-slate-900/40 flex items-center justify-center active:scale-90 transition-all z-10"
+                                            >
+                                                {isDarkMode ? (
+                                                    <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41zM7.05 18.36a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41z"/></svg>
+                                                ) : (
+                                                    <svg className="w-7 h-7 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.1 22c4.9 0 9-4.1 9-9 0-4.6-3.5-8.4-8.1-8.9.5.8.8 1.8.8 2.9 0 3.3-2.7 6-6 6-1.1 0-2.1-.3-2.9-.8.5 4.6 4.3 8.1 8.9 8.1z"/></svg>
+                                                )}
+                                            </button>
+                                            <h1 className="text-6xl font-[900] text-slate-900 dark:text-white italic tracking-tighter transition-colors">Meca PC</h1>
+                                            <p className="text-sm text-blue-500 dark:text-blue-400 font-black tracking-widest mt-3 uppercase transition-colors">실시간 룸 현황 및 웨이팅 접수</p>
+                                            <div className="step-indicator">
+                                                <div className="step-dot active"></div>
+                                                <div className="step-dot"></div>
+                                            </div>
+                                        </header>
+
+                                        <div className="kiosk-content">
+                                            <div className="space-y-4">
+                                                {(() => {
+                                                    const getRoomName = (c) => c === 2 ? '커플룸' : `${c}인실`;
+                                                    const getIcon = (c) => {
+                                                        const colorClass = c === 2 ? 'text-pink-500' : c === 3 ? 'text-sky-400' : c === 4 ? 'text-teal-400' : 'text-indigo-400';
+                                                        const iconPath = "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-7 6v1h14v-1c0-2.33-4.67-3.5-7-3.5s-7 1.17-7 3.5z";
+                                                        
+                                                        const renderIcon = (key) => (
+                                                            <svg key={key} className={`w-5 h-5 ${colorClass}`} fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d={iconPath} />
+                                                            </svg>
+                                                        );
+
+                                                        if (c === 2) return <div className="flex -space-x-1">{[1, 2].map(renderIcon)}</div>;
+                                                        
+                                                        if (c === 3) return (
+                                                            <div className="flex flex-col items-center -space-y-2">
+                                                                <div>{renderIcon(1)}</div>
+                                                                <div className="flex -space-x-1">{[2, 3].map(renderIcon)}</div>
+                                                            </div>
+                                                        );
+
+                                                        if (c === 4) return (
+                                                            <div className="flex flex-col items-center -space-y-2">
+                                                                <div className="flex -space-x-1">{[1, 2].map(renderIcon)}</div>
+                                                                <div className="flex -space-x-1">{[3, 4].map(renderIcon)}</div>
+                                                            </div>
+                                                        );
+
+                                                        if (c === 5) return (
+                                                            <div className="flex flex-col items-center -space-y-2">
+                                                                <div className="flex -space-x-1">{[1, 2].map(renderIcon)}</div>
+                                                                <div className="flex -space-x-1">{[3, 4, 5].map(renderIcon)}</div>
+                                                            </div>
+                                                        );
+
+                                                        return <div className="flex flex-wrap max-w-[40px] gap-0">{Array.from({ length: c }, (_, i) => renderIcon(i))}</div>;
+                                                    };
+                                                    return capacities.map(cap => {
+                                                        const availCount = rooms.filter(r => r.capacity === cap && r.status === 'EMPTY').length;
+                                                        const waitCount = waitingList.filter(w => w.party_size === cap).length;
+                                                        const isCompact = capacities.length >= 4;
+                                                        const borderColorClass = cap === 2 ? 'border-l-pink-500' : cap === 3 ? 'border-l-sky-400' : cap === 4 ? 'border-l-teal-400' : 'border-l-indigo-400';
+                                                        return (
+                                                            <div key={cap} className={`glass-card ${isCompact ? 'py-6' : 'py-8'} px-10 rounded-[3rem] flex justify-between items-center transition-all active:scale-[0.98] border-l-8 ${borderColorClass}`}>
+                                                                <div className="flex items-center gap-5">
+                                                                    <div className="bg-white/5 w-20 h-20 flex items-center justify-center rounded-2xl flex-shrink-0">
+                                                                        {getIcon(cap)}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className={`${isCompact ? 'text-3xl' : 'text-4xl'} font-black text-slate-900 dark:text-white italic transition-colors`}>{getRoomName(cap)}</span>
+                                                                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                                                                            {cap === 2 ? '2인만 입장 가능' : cap === 3 ? '3인만 입장 가능' : `${cap - 1}인 이상 입장 가능`}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                 <div className="flex items-center gap-10">
+                                                                    <div className="flex flex-col items-center min-w-[4rem]">
+                                                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-black tracking-widest mb-1 transition-colors">빈 방</span>
+                                                                        <span className={`${isCompact ? 'text-4xl' : 'text-5xl'} font-[900] text-blue-600 dark:text-blue-500 italic transition-colors`}>
+                                                                            {availCount}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="w-[1px] h-14 bg-slate-200 dark:bg-white/5 transition-colors"></div>
+                                                                    <div className="flex flex-col items-center min-w-[4rem]">
+                                                                        <span className="text-[11px] text-rose-500 dark:text-red-400 font-black tracking-widest mb-1 transition-colors">대기 팀</span>
+                                                                        <span className={`${isCompact ? 'text-4xl' : 'text-5xl'} font-[900] italic transition-colors ${waitCount > 0 ? 'text-rose-600 dark:text-rose-500' : 'text-slate-300 dark:text-slate-700'}`}>
+                                                                            {waitCount}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    });
+                                                })()}
+                                            </div>
+                                        </div>
+
+                                        <footer className="kiosk-footer bg-white/50 dark:bg-slate-900/40 transition-colors">
+                                            <div className="bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/30 rounded-3xl p-4 text-center mb-4 transition-colors">
+                                                <p className="text-[14px] text-slate-700 dark:text-slate-300 font-bold mb-1 break-keep transition-colors">빈 방이 있을 경우 카운터에 문의해 주세요.</p>
+                                                <p className="text-[14px] text-slate-500 dark:text-slate-400 font-medium break-keep transition-colors">없을 경우 아래 버튼을 눌러 예약을 진행해 주세요.</p>
+                                            </div>
+                                            <button onClick={() => setStep('REGISTER')} className="btn-primary w-full text-white text-2xl font-black py-7 rounded-[2.5rem] active:scale-95 transition-transform shadow-blue-500/25">
+                                                웨이팅 예약 시작하기
+                                            </button>
+                                        </footer>
+                                    </div>
+                                )
+                            })()}
+
+                            {step === 'REGISTER' && (
+                                <div className="tablet-screen fade-in">
+                                    <header className="kiosk-header">
+                                        <div className="flex justify-between items-center relative">
+                                            <button onClick={() => setStep('STATUS')} className="w-14 h-14 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 active:scale-90 transition-all">
+                                                <svg className="w-7 h-7 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <h2 className="text-3xl font-[900] text-slate-900 dark:text-white italic tracking-tighter uppercase transition-colors">웨이팅 예약 접수</h2>
+                                            <div className="w-14"></div>
+                                        </div>
+                                        <div className="step-indicator mt-6">
+                                            <div className="step-dot active"></div>
+                                            <div className="step-dot active"></div>
+                                        </div>
+                                    </header>
+
+                                    <div className="kiosk-content">
+                                        <div className="notice-container mb-6 transition-colors">
+                                            <p className="text-red-600 dark:text-red-500 font-black text-base italic tracking-tighter mb-2 transition-colors">⚠️ 반드시 확인해 주세요</p>
+                                            <div className="notice-text text-slate-700 dark:text-slate-200 transition-colors">
+                                                <p className="mb-1.5 whitespace-nowrap overflow-hidden text-ellipsis">• 예약 시간 지정 불가, 순서대로 입장</p>
+                                                <p className="mb-1.5">• 모든 일행이 같이 계셔야 입장 가능</p>
+                                                <p className="mb-1.5 text-red-600 dark:text-red-300">• 전화를 받지 않으시면 예약 취소</p>
+                                                <p>• 5분 이내 미도착 시 예약 자동 취소</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="space-y-3">
+                                                <label className="text-sm font-black text-slate-500 dark:text-slate-400 tracking-widest ml-2 uppercase transition-colors">인원별 룸 타입 선택</label>
+                                                {(() => {
+                                                    const capacities = [...new Set(rooms.map(r => r.capacity))].sort((a, b) => a - b);
+                                                    const getRoomName = (c) => c === 2 ? '커플룸' : `${c}인실`;
+                                                    const getLabel = (c) => {
+                                                        if (c === 2) return '2인만 입장 가능';
+                                                        if (c === 3) return '3인만 입장 가능';
+                                                        return `${c - 1}인 이상 입장 가능`;
+                                                    };
+
+                                                        return (
+                                                            <div className={`grid gap-4 ${capacities.length >= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                                                {capacities.map(cap => (
+                                                                    <button key={cap} onClick={() => setFormData({ ...formData, size: cap.toString() })} className={`py-6 flex flex-col items-center justify-center rounded-[2rem] border-2 transition-all active:scale-[0.96] shadow-lg ${formData.size === cap.toString() ? 'bg-blue-600 border-blue-400 text-white shadow-blue-900/40 ring-4 ring-blue-500/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:border-blue-400'}`}>
+                                                                        <span className={`font-black text-2xl mb-1 ${formData.size === cap.toString() ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{getRoomName(cap)}</span>
+                                                                        <span className={`text-xs font-bold tracking-tight ${formData.size === cap.toString() ? 'text-blue-100' : 'text-slate-500 dark:text-slate-600'}`}>{getLabel(cap)}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        );
+                                                })()}
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">예약자 성함</label>
+                                                    <input type="text" placeholder="성함을 입력해주세요" className="input-field w-full py-5 px-7 rounded-[1.8rem] font-bold text-xl transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">연락처 (휴대폰 번호)</label>
+                                                    <input type="tel" placeholder="010-0000-0000" className="input-field w-full py-5 px-7 rounded-[1.8rem] font-bold text-xl transition-all" value={formData.phone} onChange={e => {
+                                                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                                                        let formatted = raw;
+                                                        if (raw.length > 3 && raw.length <= 7) formatted = raw.slice(0, 3) + '-' + raw.slice(3);
+                                                        else if (raw.length > 7) formatted = raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7, 11);
+                                                        setFormData({ ...formData, phone: formatted });
+                                                    }} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <footer className="kiosk-footer">
+                                        <button onClick={handleRegister} className="btn-primary w-full text-white text-2xl font-black py-7 rounded-[2.5rem] active:scale-95 transition-transform">웨이팅 예약 완료하기</button>
+                                    </footer>
+                                </div>
+                            )}
+
+                            {step === 'COMPLETE' && (
+                                <div className="tablet-screen fade-in justify-center text-center">
+                                    <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <h2 className="text-4xl font-[900] text-slate-900 dark:text-white italic tracking-tighter mb-4 uppercase transition-colors">예약 완료</h2>
+                                    <div className="glass-card py-16 rounded-[4rem] relative overflow-hidden transition-all">
+                                        <p className="text-lg font-black text-blue-600 dark:text-blue-500 tracking-widest mb-6 italic transition-colors">대기 순번</p>
+                                        <div className="text-9xl font-[900] text-slate-900 dark:text-white italic tracking-tighter transition-colors">
+                                            {myTicket ? (() => {
+                                                const sameSizeList = waitingList.filter(w => w.party_size === myTicket.party_size);
+                                                const idx = sameSizeList.findIndex(w => w.id === myTicket.id);
+                                                return idx !== -1 ? idx + 1 : sameSizeList.length + 1;
+                                            })() : '-'}
+                                        </div>
+                                    </div>
+                                    <p className="text-xl text-slate-600 dark:text-slate-400 font-bold mt-10 italic tracking-wide transition-colors">잠시 후 화면이 자동 전환됩니다.</p>
+                                    <button onClick={resetToStatus} className="mt-8 mx-auto px-12 py-5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-[2rem] font-black text-xl border border-slate-200 dark:border-slate-700 transition-all shadow-xl">
+                                        처음 화면으로 돌아가기
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="p-10 text-slate-900 dark:text-white font-black italic">ADMIN VIEW (탭 전환 시에만 노출)</div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
