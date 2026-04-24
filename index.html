@@ -100,15 +100,6 @@
             box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
         }
 
-        .mode-switcher {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 10px;
-            z-index: 1000;
-            cursor: pointer;
-        }
 
         /* 주의문구 스타일 - 텍스트 크기 한 단계 축소 적용 */
         .notice-container {
@@ -127,8 +118,8 @@
         }
 
         .notice-text {
-            font-size: 0.85rem;
-            line-height: 1.5;
+            font-size: 1.1rem;
+            line-height: 1.6;
             font-weight: 600;
             word-break: keep-all;
         }
@@ -154,7 +145,7 @@
         }
 
         .kiosk-header {
-            padding: 2rem 2rem 1.5rem; /* 상단 여백 축소 3rem -> 2rem */
+            padding: 1.5rem 2rem 1rem; /* 상하 여백 대폭 축소 */
             text-align: center;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
@@ -166,7 +157,7 @@
 
         .kiosk-content {
             flex: 1;
-            padding: 2rem;
+            padding: 1.5rem 2rem; /* 상하 패딩 축소 */
             display: flex;
             flex-direction: column;
             justify-content: center; /* 다시 정중앙 모임으로 변경하되 간격을 vh로 제어 */
@@ -229,7 +220,6 @@
         const CURRENT_STORE_ID = params.get('store') || 'mohyeon1';
 
         const App = () => {
-            const [view, setView] = useState('USER');
             const [supabase, setSupabase] = useState(null);
             const [rooms, setRooms] = useState([]);
             const [waitingList, setWaitingList] = useState([]);
@@ -308,9 +298,6 @@
             return (
                 <div className={isDarkMode ? 'dark' : 'light'}>
                     <div className="bg-slate-200 dark:bg-slate-950 min-h-screen transition-colors duration-300 flex items-center justify-center p-4">
-                        <div onClick={() => setView(view === 'USER' ? 'ADMIN' : 'USER')} className="mode-switcher"></div>
-
-                        {view === 'USER' ? (
                             <div className="mx-auto relative shadow-2xl overflow-hidden bg-white dark:bg-slate-950" 
                                  style={{ 
                                      height: '100dvh', 
@@ -530,14 +517,11 @@
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="p-10 text-slate-900 dark:text-white font-black italic">ADMIN VIEW (탭 전환 시에만 노출)</div>
-                    )}
+                    </div>
                 </div>
-            </div>
-        );
-    };
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
