@@ -137,15 +137,18 @@
             flex-direction: column;
             padding: 0;
             overflow: hidden;
-            background: #f8fafc; /* 라이트 기본 */
+            background: #f8fafc;
+            /* 라이트 기본 */
         }
 
         .dark .tablet-screen {
-            background: #020617; /* 다크 기본 */
+            background: #020617;
+            /* 다크 기본 */
         }
 
         .kiosk-header {
-            padding: 1.5rem 2rem 1rem; /* 상하 여백 대폭 축소 */
+            padding: 1.5rem 2rem 1rem;
+            /* 상하 여백 대폭 축소 */
             text-align: center;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
@@ -157,10 +160,12 @@
 
         .kiosk-content {
             flex: 1;
-            padding: 1.5rem 2rem; /* 상하 패딩 축소 */
+            padding: 1.5rem 2rem;
+            /* 상하 패딩 축소 */
             display: flex;
             flex-direction: column;
-            justify-content: center; /* 다시 정중앙 모임으로 변경하되 간격을 vh로 제어 */
+            justify-content: center;
+            /* 다시 정중앙 모임으로 변경하되 간격을 vh로 제어 */
             overflow-y: auto;
             -ms-overflow-style: none;
             scrollbar-width: none;
@@ -272,16 +277,16 @@
 
             const handleRegister = async () => {
                 if (!formData.name || !formData.phone) {
-                    alert('성함과 연락처를 모두 입력해 주세요.');
+                    alert('성함과 좌석번호를 모두 입력해 주세요.');
                     return;
                 }
-                const phoneNumbersOnly = formData.phone.replace(/[^0-9]/g, '');
-                if (phoneNumbersOnly.length !== 11) {
-                    alert('연락처는 11자리 숫자로 정확히 입력해 주세요.');
+                const seatNum = parseInt(formData.phone, 10);
+                if (isNaN(seatNum) || seatNum < 1 || seatNum > 118) {
+                    alert('좌석번호는 1번부터 118번 사이의 숫자만 입력해 주세요.');
                     return;
                 }
                 const { data, error } = await supabase.from('waiting').insert([{
-                    name: formData.name, phone: formData.phone, party_size: parseInt(formData.size), store_id: CURRENT_STORE_ID
+                    name: formData.name, phone: seatNum.toString(), party_size: parseInt(formData.size), store_id: CURRENT_STORE_ID
                 }]).select();
                 if (!error && data) {
                     setMyTicket(data[0]);
@@ -298,26 +303,26 @@
             return (
                 <div className={isDarkMode ? 'dark' : 'light'}>
                     <div className="bg-slate-200 dark:bg-slate-950 min-h-screen transition-colors duration-300 flex items-center justify-center p-4">
-                            <div className="mx-auto relative shadow-2xl overflow-hidden bg-white dark:bg-slate-950" 
-                                 style={{ 
-                                     height: '100dvh', 
-                                     aspectRatio: '10 / 16',
-                                     width: 'auto',
-                                     maxWidth: '100vw'
-                                 }}>
+                        <div className="mx-auto relative shadow-2xl overflow-hidden bg-white dark:bg-slate-950"
+                            style={{
+                                height: '100dvh',
+                                aspectRatio: '10 / 16',
+                                width: 'auto',
+                                maxWidth: '100vw'
+                            }}>
                             {step === 'STATUS' && (() => {
                                 const capacities = [...new Set(rooms.map(r => r.capacity))].sort((a, b) => a - b);
                                 return (
                                     <div className="tablet-screen fade-in">
                                         <header className="kiosk-header relative">
-                                            <button 
+                                            <button
                                                 onClick={() => setIsDarkMode(!isDarkMode)}
                                                 className="absolute right-8 top-10 w-14 h-14 rounded-2xl bg-white/5 border border-white/10 dark:bg-slate-900/40 flex items-center justify-center active:scale-90 transition-all z-10"
                                             >
                                                 {isDarkMode ? (
-                                                    <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41zM7.05 18.36a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41z"/></svg>
+                                                    <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41zM7.05 18.36a.996.996 0 00-1.41 0l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41z" /></svg>
                                                 ) : (
-                                                    <svg className="w-7 h-7 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.1 22c4.9 0 9-4.1 9-9 0-4.6-3.5-8.4-8.1-8.9.5.8.8 1.8.8 2.9 0 3.3-2.7 6-6 6-1.1 0-2.1-.3-2.9-.8.5 4.6 4.3 8.1 8.9 8.1z"/></svg>
+                                                    <svg className="w-7 h-7 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.1 22c4.9 0 9-4.1 9-9 0-4.6-3.5-8.4-8.1-8.9.5.8.8 1.8.8 2.9 0 3.3-2.7 6-6 6-1.1 0-2.1-.3-2.9-.8.5 4.6 4.3 8.1 8.9 8.1z" /></svg>
                                                 )}
                                             </button>
                                             <h1 className="font-[900] text-slate-900 dark:text-white italic tracking-tighter transition-colors" style={{ fontSize: '7vh', lineHeight: '1' }}>Meca PC</h1>
@@ -335,7 +340,7 @@
                                                     const getIcon = (c) => {
                                                         const colorClass = c === 2 ? 'text-pink-500' : c === 3 ? 'text-sky-400' : c === 4 ? 'text-teal-400' : 'text-indigo-400';
                                                         const iconPath = "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-7 6v1h14v-1c0-2.33-4.67-3.5-7-3.5s-7 1.17-7 3.5z";
-                                                        
+
                                                         const renderIcon = (key) => (
                                                             <svg key={key} className={`w-5 h-5 ${colorClass}`} fill="currentColor" viewBox="0 0 24 24">
                                                                 <path d={iconPath} />
@@ -343,7 +348,7 @@
                                                         );
 
                                                         if (c === 2) return <div className="flex -space-x-1">{[1, 2].map(renderIcon)}</div>;
-                                                        
+
                                                         if (c === 3) return (
                                                             <div className="flex flex-col items-center -space-y-2">
                                                                 <div>{renderIcon(1)}</div>
@@ -385,7 +390,7 @@
                                                                         </span>
                                                                     </div>
                                                                 </div>
-                                                                 <div className="flex items-center gap-10">
+                                                                <div className="flex items-center gap-10">
                                                                     <div className="flex flex-col items-center min-w-[4rem]">
                                                                         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-black tracking-widest mb-1 transition-colors">빈 방</span>
                                                                         <span className={`${isCompact ? 'text-4xl' : 'text-5xl'} font-[900] text-blue-600 dark:text-blue-500 italic transition-colors`}>
@@ -442,8 +447,7 @@
                                             <div className="notice-text text-slate-700 dark:text-slate-200 transition-colors">
                                                 <p className="mb-2.5">• 예약하실 때 시간 지정은 불가능하며, 예약하신 순서대로 입장을 도와드리고 있습니다.</p>
                                                 <p className="mb-2.5">• 모든 일행분이 같이 계셔야 입장이 가능합니다.</p>
-                                                <p className="mb-2.5 text-red-600 dark:text-red-400 font-bold">• 전화를 받지 않으시거나 번호가 틀린 경우, 다음 예약하신 분께 차례가 넘어갑니다.</p>
-                                                <p>• 연락을 드린 후, 5분 이내에 카운터에 도착하지 않으시면 예약이 취소됩니다.</p>
+                                                <p className="mb-2.5 text-red-600 dark:text-red-400 font-bold">• 입력하신 좌석번호가 틀리거나, 본인이 아닐 경우, 자리에 계시지 않을 경우, 다음 예약하신분께 순서가 넘어갑니다.</p>
                                             </div>
                                         </div>
                                         <div className="space-y-4">
@@ -471,17 +475,19 @@
                                             </div>
                                             <div className="space-y-6">
                                                 <div className="space-y-4">
-                                                    <label className="text-lg font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">예약자 성함</label>
-                                                    <input type="text" placeholder="성함을 입력해주세요" className="input-field w-full py-7 px-9 rounded-[2.5rem] font-bold text-3xl transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                                    <label className="text-lg font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">예약자 이름</label>
+                                                    <input type="text" placeholder="이름 입력" className="input-field w-full py-7 px-9 rounded-[2.5rem] font-bold text-3xl transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                                 </div>
                                                 <div className="space-y-4">
-                                                    <label className="text-lg font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">연락처 (휴대폰 번호)</label>
-                                                    <input type="tel" placeholder="010-0000-0000" className="input-field w-full py-7 px-9 rounded-[2.5rem] font-bold text-3xl transition-all" value={formData.phone} onChange={e => {
-                                                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                                                        let formatted = raw;
-                                                        if (raw.length > 3 && raw.length <= 7) formatted = raw.slice(0, 3) + '-' + raw.slice(3);
-                                                        else if (raw.length > 7) formatted = raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7, 11);
-                                                        setFormData({ ...formData, phone: formatted });
+                                                    <label className="text-lg font-black text-slate-500 dark:text-slate-500 tracking-widest ml-2 uppercase transition-colors">좌석번호</label>
+                                                    <input type="tel" placeholder="좌석번호 입력 (1~118)" className="input-field w-full py-7 px-9 rounded-[2.5rem] font-bold text-3xl transition-all" value={formData.phone} onChange={e => {
+                                                        let raw = e.target.value.replace(/[^0-9]/g, '');
+                                                        if (raw !== '') {
+                                                            const num = parseInt(raw, 10);
+                                                            if (num > 118) return;
+                                                            raw = num > 0 ? num.toString() : raw;
+                                                        }
+                                                        setFormData({ ...formData, phone: raw });
                                                     }} />
                                                 </div>
                                             </div>
