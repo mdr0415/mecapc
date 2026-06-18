@@ -217,7 +217,8 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="env" data-plugins="transform-react-jsx">
+        /** @jsxRuntime classic */
         const { useState, useEffect } = React;
         const SUPABASE_URL = 'https://sslxmhgpygsjisuxqmjb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_fb7TduQr58DH6C1n7WNlIw_OrH-sbZV';
